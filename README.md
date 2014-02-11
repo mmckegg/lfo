@@ -25,7 +25,7 @@ Returns an LFO ModulatorNode instance.
 
 True or false. Whether to synchronize the oscillator with beats from the clock source.
 
-### node.rate ([AudioParam](https://developer.mozilla.org/en-US/docs/Web/API/AudioParam))
+### node.rate (get/set)
 
 Oscillation rate in cycles per second (Hz) or cycles per beat if `node.sync == true`.
 
@@ -49,9 +49,9 @@ Connect the modulator to the desired destination audio param.
 
 Disconnect from any target AudioParams and reset to `node.value`.
 
-### node.start(at)
+### node.start(at) - TODO
 
-Synchronize the waveform cycle start at specified time.
+Synchronize the waveform cycle start at specified time. 
 
 ### node.destroy()
 
