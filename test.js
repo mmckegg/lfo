@@ -31,6 +31,7 @@ shapePicker.onchange = function(){
 document.body.appendChild(shapePicker)
 
 addValueCheckbox(lfo, 'sync')
+addValueCheckbox(lfo, 'trigger')
 
 
 addButton('trigger 4s', function(){
