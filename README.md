@@ -49,9 +49,9 @@ Connect the modulator to the desired destination audio param.
 
 Disconnect from any target AudioParams and reset to `node.value`.
 
-### node.start(at) - TODO
+### node.start(at)
 
-Synchronize the waveform cycle start at specified time. 
+When `node.trigger` is enabled, synchronize the waveform cycle start at specified time. 
 
 ### node.destroy()
 

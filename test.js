@@ -24,7 +24,7 @@ addValueSlider(lfo, 'amp', 0.001, 0, 10)
 addValueSlider(lfo, 'phaseOffset', 0.01, -1, 1)
 
 var shapePicker = document.createElement('select')
-shapePicker.innerHTML = '<option>sine</option><option>triangle</option><option>sawtooth</option><option>square</option>'
+shapePicker.innerHTML = '<option>sine</option><option>triangle</option><option>sawtooth</option><option>sawtooth_i</option><option>square</option>'
 shapePicker.onchange = function(){
   lfo.shape = this.value
 }
@@ -38,8 +38,8 @@ addButton('trigger 4s', function(){
   var osc = audioContext.createOscillator()
   osc.connect(gain)
 
-  osc.start(audioContext.currentTime)
-  lfo.start(audioContext.currentTime)
+  lfo.start(audioContext.currentTime+0.1)
+  osc.start(audioContext.currentTime+0.1)
 
   osc.stop(audioContext.currentTime+4)
   lfo.stop(audioContext.currentTime+4)
@@ -51,8 +51,8 @@ addButton('trigger hold', function(){
   var osc = audioContext.createOscillator()
   osc.connect(gain)
   
-  osc.start(audioContext.currentTime)
   lfo.start(audioContext.currentTime)
+  osc.start(audioContext.currentTime)
 
   releaseHold = function(){
     osc.stop(audioContext.currentTime)
