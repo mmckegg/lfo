@@ -106,6 +106,9 @@ var shapes = {
   sawtooth: function(t){
     return -1 + ((t % 1) * 2)
   },
+  sawtooth_i: function(t){
+    return 1 - ((t % 1) * 2)
+  },
   triangle: function(t){
     var n = t % 0.5
     return t < 0.5 ? (-1 + n * 4) : (1 - n * 4)

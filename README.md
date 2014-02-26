@@ -31,7 +31,7 @@ Oscillation rate in cycles per second (Hz) or cycles per beat if `node.sync == t
 
 ### node.shape (get/set)
 
-The waveform shape: 'sine', 'triangle', 'sawtooth' or 'square'
+The waveform shape: 'sine', 'triangle', 'sawtooth', 'sawtooth_i' or 'square'
 
 ### node.value (get/set)
 
