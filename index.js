@@ -1,5 +1,3 @@
-var shapes = require('oscillators')
-
 module.exports = function LFO(audioContext, clock){
   var node = Object.create(proto)
   node._targets = []

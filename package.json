@@ -23,7 +23,7 @@
     "url": "https://github.com/mmckegg/lfo/issues"
   },
   "homepage": "https://github.com/mmckegg/lfo",
-  "dependencies": {
-    "oscillators": "~1.0.0"
+  "devDependencies": {
+    "bopper": "*"
   }
 }
