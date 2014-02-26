@@ -25,6 +25,10 @@ Returns an LFO ModulatorNode instance.
 
 True or false. Whether to synchronize the oscillator with beats from the clock source.
 
+## node.trigger (get/set)
+
+True or false. Whether to retrigger the cycle on `node.start()`.
+
 ### node.rate (get/set)
 
 Oscillation rate in cycles per second (Hz) or cycles per beat if `node.sync == true`.
