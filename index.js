@@ -1,4 +1,9 @@
-module.exports = function LFO(audioContext, clock){
+module.exports = function LFO(audioContext){
+
+  if (!audioContext.scheduler){
+    throw new Error('audioContext.scheduler cannot be null. Please assign a scheduler (such as bopper)')
+  }
+
   var node = Object.create(proto)
   node._targets = []
   node._syncs = []
@@ -8,11 +13,11 @@ module.exports = function LFO(audioContext, clock){
   node._lastSchedule = null
 
   node.context = audioContext
-  node.clock = clock
+  node.scheduler = audioContext.scheduler
 
   node._handler = doSchedule.bind(node)
 
-  node.clock.on('data', node._handler)
+  node.scheduler.on('data', node._handler)
 
   node.rate = 1
   node.sync = false
@@ -67,7 +72,7 @@ var proto = {
   },
   destroy: function(){
     this.disconnect()
-    node.clock.removeListener('data', node._handler)
+    node.scheduler.removeListener('data', node._handler)
   }
 }
 

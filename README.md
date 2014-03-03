@@ -17,7 +17,9 @@ $ npm install lfo
 var LFO = require('lfo')
 ```
 
-### LFO(audioContext, clock)
+### LFO(audioContext)
+
+audioContext must be extended with `scheduler`. For example: `audioContext.scheduler = Bopper(audioContext)`
 
 Returns an LFO ModulatorNode instance.
 
@@ -71,17 +73,17 @@ var Clock = require('bopper')
 var LFO = require('lfo')
 
 var audioContext = new webkitAudioContext()
-var clock = new Clock(audioContext)
+audioContext.scheduler = new Clock(audioContext)
 var oscillator = audioContext.createOscillator()
 var gain = audioContext.createGain()
 
-clock.setTempo(120)
-clock.start()
+audioContext.scheduler.setTempo(120)
+audioContext.scheduler.start()
 
 oscillator.connect(gain)
 gain.connect(audioContext.destination)
 
-var lfoModulator = LFO(audioContext, clock)
+var lfoModulator = LFO(audioContext)
 lfoModulator.connect(gain.gain)
 
 lfoModulator.rate = 4 // hz

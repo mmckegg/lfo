@@ -3,20 +3,22 @@ var audioContext = new webkitAudioContext()
 var LFO = require('./index')
 var Clock = require('bopper')
 
-var clock = Clock(audioContext)
-var lfo = LFO(audioContext, clock)
+audioContext.scheduler = Clock(audioContext)
+
+var lfo = LFO(audioContext)
 var gain = audioContext.createGain()
 
 lfo.min = 0
 
-clock.setTempo(120)
-clock.start()
+audioContext.scheduler.setTempo(120)
+audioContext.scheduler.start()
 
 lfo.connect(gain.gain)
 gain.connect(audioContext.destination)
 
+
 var tempoSlider = addSlider('tempo', 120, 1, 60, 180, function(value){
-  clock.setTempo(value)
+  audioContext.scheduler.setTempo(value)
 })
 
 addValueSlider(lfo, 'rate', 0.001, 0.001, 10)
