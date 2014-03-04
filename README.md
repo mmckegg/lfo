@@ -3,8 +3,6 @@ lfo
 
 Low frequency oscillator for automating Web Audio API AudioParams.
 
-Must be connected to a scheduling clock source such as [bopper](https://github.com/mmckegg/bopper).
-
 ## Install
 
 ```bash
@@ -19,21 +17,11 @@ var LFO = require('lfo')
 
 ### LFO(audioContext)
 
-audioContext must be extended with `scheduler`. For example: `audioContext.scheduler = Bopper(audioContext)`
-
 Returns an LFO ModulatorNode instance.
-
-### node.sync (get/set)
-
-True or false. Whether to synchronize the oscillator with beats from the clock source.
-
-## node.trigger (get/set)
-
-True or false. Whether to retrigger the cycle on `node.start()`.
 
 ### node.rate (get/set)
 
-Oscillation rate in cycles per second (Hz) or cycles per beat if `node.sync == true`.
+Oscillation rate in cycles per second (Hz).
 
 ### node.shape (get/set)
 
@@ -53,15 +41,15 @@ Connect the modulator to the desired destination audio param.
 
 ### node.disconnect()
 
-Disconnect from any target AudioParams and reset to `node.value`.
+Disconnect from any target AudioParams.
 
 ### node.start(at)
 
-When `node.trigger` is enabled, synchronize the waveform cycle start at specified time. 
+Starts the LFO at specified time.
 
-### node.destroy()
+### node.stop(at)
 
-Immediately disconnect from target AudioParam and clean up any state.
+Stops the LFO at specified time.
 
 ## Example
 
@@ -69,16 +57,11 @@ Create tremolo effect
 
 ```js
 
-var Clock = require('bopper')
 var LFO = require('lfo')
 
 var audioContext = new webkitAudioContext()
-audioContext.scheduler = new Clock(audioContext)
 var oscillator = audioContext.createOscillator()
 var gain = audioContext.createGain()
-
-audioContext.scheduler.setTempo(120)
-audioContext.scheduler.start()
 
 oscillator.connect(gain)
 gain.connect(audioContext.destination)
