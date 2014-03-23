@@ -11,44 +11,139 @@ function LFO(audioContext){
     return new LFO(audioContext)
   }
 
+  this._curveKey = null
   this._targets = []
   this.context = audioContext
   this._processSchedule = processSchedule.bind(this)
-  this.rate = 1
-  this.amp = 0.5
-  this.value = 0.5
-  this.phaseOffset = 0
-  this.min = -Infinity
-  this.max = Infinity
-  this.shape = 'sine'
+  this._rate = 1
+  this._amp = 0.5
+  this._value = 0.5
+  this._phaseOffset = 0
+  this._min = -Infinity
+  this._max = Infinity
+  this._shape = 'sine'
+  this._sync = false
+
+  this.trigger = false
 }
 
-function processSchedule(schedule){
-  var duration = this.context.currentTime - this._lastSchedule
-  var from = this.context.currentTime
+function processSchedule(){
+  var currentTime = this.context.currentTime
+  var duration = currentTime - this._lastSchedule
+  var from = currentTime
   var to = from + duration
 
-  if (this._scheduledTo > from && this._scheduledTo < to){
+  // sync rate with tempo if this.sync
+  this._refreshComputedRate()
+
+  if (!this._curve){ // regenerate c`urve and schedule offsets
+    var newCurve = getCurve(this)
+
+    var offset = getOffset(this._scheduledFrom, this.context.currentTime, this._cycleDuration) % 1
+    this._curve = newCurve
+    this._cycleDuration = this._curve.length / this.context.sampleRate
+
+    var timeOffset = this._cycleDuration * offset
+    var stepOffset = Math.round(this._curve.length * offset)
+    var offsetCurve = this._curve.subarray(stepOffset)
+    var offsetDuration = offsetCurve.length / this.context.sampleRate
+
+    cancelValues(this._targets, from)
+    setValueCurves(this._targets, offsetCurve, from, offsetDuration)
+
+    this._scheduledFrom = from - (this._cycleDuration * offset)
+    from = this._scheduledTo = from + offsetDuration
     this._doSchedule(this._scheduledTo, to)
   }
 
-  this._lastSchedule = from
+  if (this._scheduledTo < to){
+    this._doSchedule(this._scheduledTo, to)
+  }
+
+  this._lastSchedule = currentTime
+}
+
+function getOffset(start, currentTime, duration){
+  if (duration){
+    var value = Math.max(0, (currentTime - start) / duration)
+    return value
+  } else {
+    return 0
+  }
 }
 
 LFO.prototype = {
 
   constructor: LFO,
 
+  get sync(){ return this._sync },
+  set sync(value){
+    this._sync = value
+    this._curve = null
+  },
+
+  get rate(){ return this._rate },
+  set rate(value){
+    this._rate = value
+    this._curve = null
+  },
+
+  get amp(){ return this._amp },
+  set amp(value){
+    this._amp = value
+    this._curve = null
+  },
+
+  get value(){ return this._value },
+  set value(value){
+    this._value = value
+    this._curve = null
+  },
+
+  get phaseOffset(){ return this._phaseOffset },
+  set phaseOffset(value){
+    this._phaseOffset = value
+    this._curve = null
+  },
+
+  get min(){ return this._min },
+  set min(value){
+    this._min = value
+    this._curve = null
+  },
+
+  get max(){ return this._max },
+  set max(value){
+    this._max = value
+    this._curve = null
+  },
+
+  get shape(){ return this._shape },
+  set shape(value){
+    this._shape = value
+    this._curve = null
+  },
+
   start: function(at){
     at = at || this.context.currentTime
-    this._curve = generateCurve(this)
-    this._cycleDuration = this._curve.length / this.context.sampleRate
-    this._scheduledTo = 0
 
-    this._doSchedule(at, at + 0.2)
+    if (!this.trigger){
 
-    // set up rescheduler
-    this._lastSchedule = at
+      this._curve = null
+
+      if (this.sync && this.context.scheduler && this.context.scheduler.getTimeAt){
+        this.scheduleFrom = this.context.scheduler.getTimeAt()
+      } else {
+        this._scheduledFrom = 0
+      }
+
+    }
+
+    this._scheduledTo = at
+    this._lastSchedule = at - 0.2
+    this._processSchedule()
+
+    clearInterval(this._rescheduler)
     this._rescheduler = setInterval(this._processSchedule, 100)
   },
 
@@ -62,12 +157,25 @@ LFO.prototype = {
   },
 
   _doSchedule: function(timeFrom, timeTo){
-    console.log('schedule', timeFrom, timeTo)
-    this._scheduledTo = timeFrom
+    this._scheduledTo = Math.max(this.context.currentTime, timeFrom)
 
     while (this._scheduledTo < timeTo) {
+      this._scheduledFrom = this._scheduledTo
       setValueCurves(this._targets, this._curve, this._scheduledTo, this._cycleDuration)
       this._scheduledTo += this._cycleDuration
+    }
+  },
+
+  _refreshComputedRate: function(){
+    var value = this._rate
+    
+    if (this._sync && this.context.scheduler && this.context.scheduler.getTempo){
+      value = value * (this.context.scheduler.getTempo() / 60)
+    }
+
+    if (this._computedRate != value){
+      this._computedRate = value
+      this._curve = null
     }
   },
 
@@ -84,6 +192,10 @@ LFO.prototype = {
     this._targets.length = 0
   }
 
+}
+
+function getCurveKey(lfo){
+  return '' + lfo._computedRate+ '/' + lfo.amp + '/' + lfo.value + '/' + lfo.phaseOffset + '/' + lfo.min + '/' + lfo.max + '/' + lfo.shape
 }
 
 function setValueCurves(targets, curve, at, duration){
@@ -107,9 +219,23 @@ function setValues(targets, value, at){
   }
 }
 
+var curves = []
+var curveCache = {}
+
+function getCurve(node){
+  var key = getCurveKey(node)
+
+  if (!curveCache[key]){
+    curveCache[key] = generateCurve(node)
+    curves.push(key)
+  }
+
+  return curveCache[key]
+}
 
 function generateCurve(node){
-  var length = node.context.sampleRate / (Math.max(node.rate, 0.1))
+  console.log('generating')
+  var length = node.context.sampleRate / (Math.max(node._computedRate, 0.1))
   var curve = new Float32Array(length)
   var shape = shapes[node.shape] || shapes['sine']
   for (var i=0;i<length;i++){
@@ -132,7 +258,7 @@ var shapes = {
   },
   triangle: function(t){
     var n = t % 0.5
-    return t < 0.5 ? (-1 + n * 4) : (1 - n * 4)
+    return (t % 1) < 0.5 ? (-1 + n * 4) : (1 - n * 4)
   },
   square: function(t){
     return Math.max(-1, Math.min(1, shapes.sine(t)*20))

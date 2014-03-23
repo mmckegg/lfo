@@ -23,6 +23,14 @@ Returns an LFO ModulatorNode instance.
 
 Oscillation rate in cycles per second (Hz).
 
+### node.trigger (get/set)
+
+When `true` the waveform is synced to the trigger time, otherwise is relative to `audioContext.currentTime`.
+
+### node.sync (get/set)
+
+When `true`, the oscillation rate is multiplied by `audioContext.scheduler.getTempo() / 60` to allow beat sync.
+
 ### node.shape (get/set)
 
 The waveform shape: 'sine', 'triangle', 'sawtooth', 'sawtooth_i' or 'square'
