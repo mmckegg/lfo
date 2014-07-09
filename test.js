@@ -100,7 +100,7 @@ function addSlider(property, defaultValue, step, min, max, onchange){
     slider.step = step
   }
 
-  slider.onchange = function(){
+  slider.oninput = function(){
     label.data = this.value
     onchange&&onchange(parseInt(this.value))
   }
@@ -127,7 +127,7 @@ function addValueSlider(node, property, step, min, max){
     slider.step = step
   }
 
-  slider.onchange = function(){
+  slider.oninput = function(){
     label.data = this.value
     node[property] = parseFloat(this.value)
   }
