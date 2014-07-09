@@ -19,6 +19,10 @@ var LFO = require('lfo')
 
 Returns an LFO ModulatorNode instance.
 
+### node.value ([AudioParam](https://developer.mozilla.org/en-US/docs/Web/API/AudioParam))
+
+The center value of the oscillation. Is an AudioParam so accepts nested modulations.
+
 ### node.rate (get/set)
 
 Oscillation rate in cycles per second (Hz).
@@ -34,10 +38,6 @@ When `true`, the oscillation rate is multiplied by `audioContext.scheduler.getTe
 ### node.shape (get/set)
 
 The waveform shape: 'sine', 'triangle', 'sawtooth', 'sawtooth_i' or 'square'
-
-### node.value (get/set)
-
-The center value of the oscillation.
 
 ### node.amp (get/set)
 
@@ -77,6 +77,7 @@ gain.connect(audioContext.destination)
 var lfoModulator = LFO(audioContext)
 lfoModulator.connect(gain.gain)
 
+lfoModulator.value.value = 2 // AudioParam
 lfoModulator.rate = 4 // hz
 lfoModulator.shape = 'sine'
 

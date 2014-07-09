@@ -8,6 +8,11 @@ audioContext.scheduler = Clock(audioContext)
 var lfo = LFO(audioContext)
 var gain = audioContext.createGain()
 
+//var modulator = LFO(audioContext)
+//modulator.rate = 1
+//modulator.amp = 1
+//modulator.value.value = 10
+
 lfo.min = 0
 
 audioContext.scheduler.setTempo(120)
@@ -15,6 +20,7 @@ audioContext.scheduler.start()
 
 lfo.connect(gain.gain)
 gain.connect(audioContext.destination)
+//modulator.connect(lfo.value)
 
 
 var tempoSlider = addSlider('tempo', 120, 1, 60, 180, function(value){
@@ -42,9 +48,12 @@ addButton('trigger 4s', function(){
 
   lfo.start(audioContext.currentTime+0.1)
   osc.start(audioContext.currentTime+0.1)
+  //modulator.start(audioContext.currentTime+0.1)
 
   osc.stop(audioContext.currentTime+4)
   lfo.stop(audioContext.currentTime+4)
+  //modulator.stop(audioContext.currentTime+4)
+
 })
 
 var releaseHold = null
@@ -55,10 +64,12 @@ addButton('trigger hold', function(){
   
   lfo.start(audioContext.currentTime)
   osc.start(audioContext.currentTime)
+  //modulator.start(audioContext.currentTime)
 
   releaseHold = function(){
     osc.stop(audioContext.currentTime)
     lfo.stop(audioContext.currentTime)
+    //modulator.stop(audioContext.currentTime)
   }
 
 }, function(){

@@ -25,5 +25,9 @@
   "homepage": "https://github.com/mmckegg/lfo",
   "devDependencies": {
     "bopper": "*"
+  },
+  "dependencies": {
+    "audio-param-transform": "^0.2.0",
+    "custom-audio-node": "^0.2.0"
   }
 }

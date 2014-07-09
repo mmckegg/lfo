@@ -1,8 +1,6 @@
-// cache curve generation
+var extendTransform = require('audio-param-transform')
+var CustomAudioParam = require('custom-audio-node/audio-param')
 
-// schedule as much as possible at a time
-
-// interpolate curve until 2x bigger or 4x smaller
 module.exports = LFO
 
 function LFO(audioContext){
@@ -17,12 +15,13 @@ function LFO(audioContext){
   this._processSchedule = processSchedule.bind(this)
   this._rate = 1
   this._amp = 0.5
-  this._value = 0.5
   this._phaseOffset = 0
   this._min = -Infinity
   this._max = Infinity
   this._shape = 'sine'
   this._sync = false
+
+  this.value = CustomAudioParam(audioContext, 'value')
 
   this.trigger = false
 }
@@ -36,7 +35,7 @@ function processSchedule(){
   // sync rate with tempo if this.sync
   this._refreshComputedRate()
 
-  if (!this._curve){ // regenerate c`urve and schedule offsets
+  if (!this._curve){ // regenerate curve and schedule offsets
     var newCurve = getCurve(this)
 
     var offset = getOffset(this._scheduledFrom, this.context.currentTime, this._cycleDuration) % 1
@@ -94,12 +93,6 @@ LFO.prototype = {
     this._curve = null
   },
 
-  get value(){ return this._value },
-  set value(value){
-    this._value = value
-    this._curve = null
-  },
-
   get phaseOffset(){ return this._phaseOffset },
   set phaseOffset(value){
     this._phaseOffset = value
@@ -151,7 +144,7 @@ LFO.prototype = {
     at = at || this.context.currentTime
     this._doSchedule(this._scheduledTo, at)
     cancelValues(this._targets, at)
-    setValues(this._targets, this.value, at)
+    setValues(this._targets, 0, at)
     // release rescheduler
     clearInterval(this._rescheduler)
   },
@@ -181,26 +174,31 @@ LFO.prototype = {
 
   connect: function(param){
     if (!~this._targets.indexOf(param)){
-      //TODO: handle adding targets after start
-      this._targets.push(param)
+      extendTransform(param, this.context)
+      param.clearTransforms()
+
+      this.value.addTarget(param.transform(param.value))      
+      this._targets.push(param.transform(add, 0))
     }
   },
 
   disconnect: function(){
     cancelValues(this._targets, this.context.currentTime)
-    setValues(this._targets, this.value, this.context.currentTime)
+    setValues(this._targets, 0, this.context.currentTime)
+    this.value.clearTargets()
     this._targets.length = 0
   }
 
 }
 
 function getCurveKey(lfo){
-  return '' + lfo._computedRate+ '/' + lfo.amp + '/' + lfo.value + '/' + lfo.phaseOffset + '/' + lfo.min + '/' + lfo.max + '/' + lfo.shape
+  return '' + lfo._computedRate+ '/' + lfo.amp + '/' + lfo.phaseOffset + '/' + lfo.min + '/' + lfo.max + '/' + lfo.shape
 }
 
 function setValueCurves(targets, curve, at, duration){
   for (var i=0;i<targets.length;i++){
     var target = targets[i]
+    //target.setValueAtTime(2, at)
     target.setValueCurveAtTime(curve, at, duration)
   }
 }
@@ -240,7 +238,7 @@ function generateCurve(node){
   var shape = shapes[node.shape] || shapes['sine']
   for (var i=0;i<length;i++){
     var phase = i / length + node.phaseOffset
-    var nextValue = node.value + (shape(1 + phase) * node.amp)
+    var nextValue = shape(1 + phase) * node.amp
     curve[i] = Math.min(node.max, Math.max(node.min, nextValue))
   }
   return curve
@@ -275,4 +273,16 @@ function blunt(v){
   } else {
     return v
   }
+}
+
+function add(a,b){
+  return a + b
+}
+
+function subtract(a,b){
+  return a - b
+}
+
+function multiply(a,b){
+  return a * b
 }
