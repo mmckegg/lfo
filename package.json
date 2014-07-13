@@ -27,7 +27,7 @@
     "bopper": "*"
   },
   "dependencies": {
-    "audio-param-transform": "^0.2.0",
-    "custom-audio-node": "^0.2.0"
+    "audio-param-transform": "^0.3.0",
+    "custom-audio-node": "^0.3.0"
   }
 }
