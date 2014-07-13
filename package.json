@@ -1,6 +1,6 @@
 {
   "name": "lfo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Low frequency oscillator for automating Web Audio API AudioParams.",
   "main": "index.js",
   "scripts": {
