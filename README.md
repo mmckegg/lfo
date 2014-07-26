@@ -67,7 +67,7 @@ Create tremolo effect
 
 var LFO = require('lfo')
 
-var audioContext = new webkitAudioContext()
+var audioContext = new AudioContext()
 var oscillator = audioContext.createOscillator()
 var gain = audioContext.createGain()
 

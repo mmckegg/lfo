@@ -1,4 +1,4 @@
-var audioContext = new webkitAudioContext()
+var audioContext = new AudioContext()
 
 var LFO = require('./index')
 var Clock = require('bopper')
