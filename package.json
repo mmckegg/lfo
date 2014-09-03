@@ -4,7 +4,7 @@
   "description": "Low frequency oscillator for automating Web Audio API AudioParams.",
   "main": "index.js",
   "scripts": {
-    "test": "beefy test.js"
+    "example": "beefy example.js"
   },
   "repository": {
     "type": "git",
@@ -24,10 +24,7 @@
   },
   "homepage": "https://github.com/mmckegg/lfo",
   "devDependencies": {
+    "beefy": "^2.1.1",
     "bopper": "*"
-  },
-  "dependencies": {
-    "audio-param-transform": "^1.0.0",
-    "custom-audio-node": "^0.3.0"
   }
 }

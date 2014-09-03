@@ -19,29 +19,21 @@ var LFO = require('lfo')
 
 Returns an LFO ModulatorNode instance.
 
-### node.value ([AudioParam](https://developer.mozilla.org/en-US/docs/Web/API/AudioParam))
-
-The center value of the oscillation. Is an AudioParam so accepts nested modulations.
-
 ### node.rate (get/set)
 
 Oscillation rate in cycles per second (Hz).
 
-### node.trigger (get/set)
+### node.amp (get/set)
 
-When `true` the waveform is synced to the trigger time, otherwise is relative to `audioContext.currentTime`.
-
-### node.sync (get/set)
-
-When `true`, the oscillation rate is multiplied by `audioContext.scheduler.getTempo() / 60` to allow beat sync.
+Amplitude of the oscillation.
 
 ### node.shape (get/set)
 
 The waveform shape: 'sine', 'triangle', 'sawtooth', 'sawtooth_i' or 'square'
 
-### node.amp (get/set)
+### node.sync (get/set)
 
-Amplitude of the oscillation.
+When `true`, the oscillation rate is multiplied by `audioContext.scheduler.getTempo() / 60` to allow beat sync.
 
 ### node.connect(destinationAudioParam)
 
@@ -75,11 +67,11 @@ oscillator.connect(gain)
 gain.connect(audioContext.destination)
 
 var lfoModulator = LFO(audioContext)
-lfoModulator.connect(gain.gain)
+gain.value = 2 // set oscillation centre value
 
-lfoModulator.value.value = 2 // AudioParam
 lfoModulator.rate = 4 // hz
 lfoModulator.shape = 'sine'
+lfoModulator.connect(gain.gain)
 
 lfoModulator.start(audioContext.currentTime)
 oscillator.start(audioContext.currentTime)

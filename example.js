@@ -6,6 +6,7 @@ var Clock = require('bopper')
 audioContext.scheduler = Clock(audioContext)
 
 var lfo = LFO(audioContext)
+lfo.shape = 'sawtooth_i'
 var gain = audioContext.createGain()
 
 //var modulator = LFO(audioContext)
@@ -23,13 +24,12 @@ gain.connect(audioContext.destination)
 //modulator.connect(lfo.value)
 
 
-var tempoSlider = addSlider('tempo', 120, 1, 60, 180, function(value){
+var tempoSlider = addSliderHandler('tempo', 120, 1, 60, 180, function(value){
   audioContext.scheduler.setTempo(value)
 })
 
-addValueSlider(lfo, 'rate', 0.001, 0.001, 10)
-addValueSlider(lfo, 'amp', 0.001, 0, 10)
-addValueSlider(lfo, 'phaseOffset', 0.01, -1, 1)
+addSlider('rate', lfo.rate, 0.001, 0.001, 10)
+addSlider('amp', lfo.amp, 0.001, 0, 10)
 
 var shapePicker = document.createElement('select')
 shapePicker.innerHTML = '<option>sine</option><option>triangle</option><option>sawtooth</option><option>sawtooth_i</option><option>square</option>'
@@ -39,20 +39,14 @@ shapePicker.onchange = function(){
 document.body.appendChild(shapePicker)
 
 addValueCheckbox(lfo, 'sync')
-addValueCheckbox(lfo, 'trigger')
 
-
-addButton('trigger 4s', function(){
+addButton('start', function(){
   var osc = audioContext.createOscillator()
   osc.connect(gain)
 
-  lfo.start(audioContext.currentTime+0.1)
-  osc.start(audioContext.currentTime+0.1)
+  lfo.start(audioContext.currentTime)
+  osc.start(audioContext.currentTime)
   //modulator.start(audioContext.currentTime+0.1)
-
-  osc.stop(audioContext.currentTime+4)
-  lfo.stop(audioContext.currentTime+4)
-  //modulator.stop(audioContext.currentTime+4)
 
 })
 
@@ -84,7 +78,7 @@ function addButton(name, down, up){
   document.body.appendChild(button)
 }
 
-function addSlider(property, defaultValue, step, min, max, onchange){
+function addSliderHandler(property, defaultValue, step, min, max, onchange){
   var container = document.createElement('div')
   container.appendChild(document.createTextNode(property))
   var label = document.createTextNode(defaultValue)
@@ -130,6 +124,35 @@ function addValueSlider(node, property, step, min, max){
   slider.oninput = function(){
     label.data = this.value
     node[property] = parseFloat(this.value)
+  }
+  container.appendChild(slider)
+  container.appendChild(label)
+  document.body.appendChild(container)
+}
+
+function addSlider(name, param, step, min, max){
+  var container = document.createElement('div')
+  container.appendChild(document.createTextNode(name))
+  var label = document.createTextNode(param.value)
+  var slider = document.createElement('input')
+  slider.type = 'range'
+
+  var min = min != null ? min : (param.minValue || 0)
+  var max = max != null ? max : (param.maxValue || 100)
+
+  var range = max - min
+
+  slider.min = min
+  slider.max = max
+  slider.step = step || (range / 100)
+
+  slider.value = param.value
+  slider.style.width = '300px'
+
+
+  slider.oninput = function(){
+    label.data = this.value
+    param.value = parseFloat(this.value)
   }
   container.appendChild(slider)
   container.appendChild(label)
