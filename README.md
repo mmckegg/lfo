@@ -17,15 +17,23 @@ var LFO = require('lfo')
 
 ### LFO(audioContext)
 
-Returns an LFO ModulatorNode instance.
+Returns an LFO [AudioNode](https://developer.mozilla.org/en-US/docs/Web/API/AudioNode) instance.
 
-### node.rate (get/set)
+### node.value ([AudioParam](https://developer.mozilla.org/en-US/docs/Web/API/AudioParam))
+
+Modulate this base `value` based on operation specified by `node.mode`.
+
+### node.rate (AudioParam)
 
 Oscillation rate in cycles per second (Hz).
 
-### node.amp (get/set)
+### node.amp (AudioParam)
 
 Amplitude of the oscillation.
+
+### node.mode (get/set)
+
+The operation to apply to `node.value`. Defaults to `'multiply'.
 
 ### node.shape (get/set)
 
@@ -33,7 +41,11 @@ The waveform shape: 'sine', 'triangle', 'sawtooth', 'sawtooth_i' or 'square'
 
 ### node.sync (get/set)
 
-When `true`, the oscillation rate is multiplied by `audioContext.scheduler.getTempo() / 60` to allow beat sync.
+When `true`, the oscillation rate is multiplied by `node.tempo / 60` to allow beat sync.
+
+### node.tempo (get/set)
+
+Set the tempo (BPM) for use when `node.sync` is `true`.
 
 ### node.connect(destinationAudioParam)
 
@@ -45,7 +57,7 @@ Disconnect from any target AudioParams.
 
 ### node.start(at)
 
-Starts the LFO at specified time.
+Starts the LFO at specified time. This method can only be called once. Create new instances of LFO for each scheduled events.
 
 ### node.stop(at)
 

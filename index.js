@@ -1,100 +1,164 @@
 module.exports = LFO
 
-function LFO(audioContext){
+function LFO(audioContext, opts){
   var node = audioContext.createGain()
 
-  var inverter = audioContext.createGain()
-  inverter.connect(node)
+  var oscillator = node._oscillator = audioContext.createOscillator()
+  var voltage = flatten(oscillator)
 
-  node.output = audioContext.createGain()
-  node.output.connect(inverter)
+  var value = scale(voltage)
 
+  var inverter = scale(oscillator)
 
-  var voltage = flatten(node.output)
-  var rateVoltage = scale(voltage)
-  var rateMultipler = scale(rateVoltage)
+  var adder = audioContext.createGain()
+  adder.connect(node)
 
-  var oscillator = audioContext.createOscillator()
+  var amp = scale(inverter)
+  var ampMultiplier = scale(amp)
 
-  node.start = start
-  node.stop = stop
+  ampMultiplier.gain.value = 0
+  value.connect(ampMultiplier.gain)
 
-  node.rate = rateVoltage.gain
-  node.rate.value = 1
+  var rate = scale(voltage)
+  var rateMultiplier = scale(rate)
 
-  node.amp = node.gain
-  node.amp.value = 0.5
+  ampMultiplier.connect(node)
+  value.connect(node)
 
-  node._shape = 'sine'
-  node._sync = false
-  node._syncing = false
-  node._scheduler = audioContext.scheduler
-  node._oscillators = []
-  node._inverter = inverter
-  node._rateMultipler = rateMultipler
-  node._onTempoChange = _onTempoChange.bind(node)
+  oscillator.frequency.value = 0
+  rateMultiplier.connect(oscillator.frequency)
 
-  Object.defineProperties(node, properties)
+  // export params
+  node.value = value.gain
+  node.rate = rate.gain
+  node.amp = amp.gain
+
+  Object.defineProperties(node, props)
+
+  node._state = {
+    value: value,
+    ampMultiplier: ampMultiplier,
+    rateMultiplier: rateMultiplier,
+    oscillator: oscillator,
+    inverter: inverter,
+    sync: false,
+    tempo: null,
+    mode: 'multiply'
+  }
 
   return node
 }
 
-var properties = {
+var props = {
+
   sync: {
     get: function(){
-      return this._sync
+      return this._state.sync
     },
     set: function(value){
-      this._sync = value
+      this._state.sync = value
       refreshSync(this)
     }
   },
+
+  mode: {
+    get: function(){
+      return this._state.mode
+    },
+    set: function(value){
+      // modes: arate, multiply, add, subtract
+      this._state.mode = value
+      refreshMode(this)
+    }
+  },
+
+  tempo: {
+    get: function(){
+      return this._state.tempo
+    },
+    set: function(value){
+      this._state.tempo = value
+      refreshSync(this)
+    }
+  },
+
   shape: {
     get: function(){
-      if (this._inverter.gain.value < 0){
-        return this._shape + '_i'
+      if (this._state.inverter.gain.value < 0){
+        return this._state.oscillator.type + '_i'
       } else {
-        return this._shape
+        return this._state.oscillator.type
       }
     },
     set: function(value){
       var parts = value.split('_')
-      this._shape = parts[0]
-      this._inverter.gain.value = parts[1] == 'i' ? -1 : 1
-      this._oscillators.forEach(function(osc){
-        osc.type = parts[0]
-      })
+      this._state.shape = parts[0]
+      this._state.inverter.gain.value = parts[1] == 'i' ? -1 : 1
+      this._state.oscillator.type = parts[0]
+    }
+  },
+
+  start: {
+    value: function(at){
+      this._state.oscillator.start(at)
+      phaseOffset(this._state.oscillator, 0.5, Math.max(at, this._state.oscillator.context.currentTime))
+    }
+  },
+
+  stop: {
+    value: function(at){
+      this._state.oscillator.stop(at)
+    }
+  },
+
+  onended: {
+    get: function(){
+      return this._state.oscillator.onended
+    },
+    set: function(value){
+      this._state.oscillator.onended = value
     }
   }
+
 }
 
-function _onTempoChange(tempo){
-  if (this._sync){
-    this._rateMultipler.gain.value = tempo / 60
+function refreshSync(node){
+  if (node._state.sync && node._state.tempo){
+    node._state.rateMultiplier.gain.value = node._state.tempo / 60
+  } else {
+    node._state.rateMultiplier.gain.value = 1
   }
 }
 
-function start(at){
-  at = at || this.context.currentTime
-  var oscillator = this.context.createOscillator()
-  oscillator.frequency.value = 0
-  oscillator.connect(this.output)
+function refreshMode(node){
+  var mode = node._state.mode
 
-  this._rateMultipler.connect(oscillator.frequency)
-  this._oscillators.push(oscillator)
+  var ampMultiplier = node._state.ampMultiplier
+  var value = node._state.value
+  value.disconnect()
 
-  phaseOffset(oscillator, 0.5, at)
-
-  oscillator.type = this._shape
-  oscillator.start(at)
-  refreshSync(this)
+  if (mode === 'arate'){
+    //TODO
+  } else if (mode === 'multiply'){
+    ampMultiplier.gain.value = 0
+    value.connect(ampMultiplier.gain)
+  } else if (mode === 'add'){
+    ampMultiplier.gain.value = 1
+    value.connect(node)
+  } else if (mode === 'subtract'){
+    ampMultiplier.gain.value = -1
+    value.connect(node)
+  }
 }
 
 function stop(at){
-  if (this._oscillators.length){
-    this._oscillators.shift().stop(at)
-    refreshSync(this)
-  }
+  this._state.oscillator.stop(at)
+}
+
+function phaseOffset(oscillator, offset, at){
+  var value = oscillator.frequency.value
+  oscillator.frequency.setValueAtTime(1000*offset, at)
+  oscillator.frequency.setValueAtTime(value, at+1/1000)
 }
 
 var flat = new Float32Array([1,1])
@@ -105,44 +169,22 @@ function flatten(node){
   return shaper
 }
 
+//function arate(node){
+//  var shaper = node.context.createWaveShaper()
+//  shaper.curve = log
+//  node.connect(shaper)
+//  return shaper
+//}
+
 function scale(node){
   var gain = node.context.createGain()
   node.connect(gain)
   return gain
 }
 
-function refreshSync(node){
-  if (node._scheduler){
-    if (node._sync && node._oscillators.length){
-      if (!node._syncing){
-        node._onTempoChange(node._scheduler.getTempo())
-        node._scheduler.on('tempo', node._onTempoChange)
-        node._syncing = true
-      }
-    } else if (node._syncing){
-      node._scheduler.removeListener('tempo', node._onTempoChange)
-      node._rateMultipler.gain.value = 1
-      node._syncing = false
-    }
-  } else {
-    node._rateMultipler.gain.value = 1
-  }
-}
-
-function phaseOffset(oscillator, offset, at){
-  var value = oscillator.frequency.value
-  oscillator.frequency.setValueAtTime(1000*offset, at)
-  oscillator.frequency.setValueAtTime(value, at+1/1000)
-}
-
-function log(node){
-  var audioContext = node.context
-  var viewer = audioContext.createScriptProcessor(2048, 1)
-  node.connect(viewer)
-  viewer.onaudioprocess = function(e){
-    console.log(e.inputBuffer.getChannelData(0)[0])
-  }
-  window.viewers = window.viewers || []
-  window.viewers.push(viewer)
-  viewer.connect(audioContext.destination)
-}
+//var res = 1000
+//var max = Math.log(20000)/Math.log(10)
+//var log = new Float32Array(res)
+//for (var i=0;i<log.length;i++){
+//  log[i] = Math.pow(10, max * (i/res))
+//}//

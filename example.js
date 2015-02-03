@@ -9,27 +9,18 @@ var lfo = LFO(audioContext)
 lfo.shape = 'sawtooth_i'
 var gain = audioContext.createGain()
 
-//var modulator = LFO(audioContext)
-//modulator.rate = 1
-//modulator.amp = 1
-//modulator.value.value = 10
-
-lfo.min = 0
-
 audioContext.scheduler.setTempo(120)
 audioContext.scheduler.start()
 
 lfo.connect(gain.gain)
 gain.connect(audioContext.destination)
-//modulator.connect(lfo.value)
 
-
-var tempoSlider = addSliderHandler('tempo', 120, 1, 60, 180, function(value){
-  audioContext.scheduler.setTempo(value)
-})
+lfo.tempo = 120
+var tempoSlider = addValueSlider(lfo, 'tempo', 1, 60, 180)
 
 addSlider('rate', lfo.rate, 0.001, 0.001, 10)
 addSlider('amp', lfo.amp, 0.001, 0, 10)
+addSlider('value', lfo.value, 0.001, 0, 10)
 
 var shapePicker = document.createElement('select')
 shapePicker.innerHTML = '<option>sine</option><option>triangle</option><option>sawtooth</option><option>sawtooth_i</option><option>square</option>'
@@ -37,6 +28,13 @@ shapePicker.onchange = function(){
   lfo.shape = this.value
 }
 document.body.appendChild(shapePicker)
+
+var modePicker = document.createElement('select')
+modePicker.innerHTML = '<option>multiply</option><option>add</option><option>subtract</option>'
+modePicker.onchange = function(){
+  lfo.mode = this.value
+}
+document.body.appendChild(modePicker)
 
 addValueCheckbox(lfo, 'sync')
 
