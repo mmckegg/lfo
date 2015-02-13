@@ -39,6 +39,8 @@ The operation to apply to `node.value`. Defaults to `'multiply'.
 
 The waveform shape: 'sine', 'triangle', 'sawtooth', 'sawtooth_i' or 'square'
 
+### node.phaseOffset (get/set)
+
 ### node.sync (get/set)
 
 When `true`, the oscillation rate is multiplied by `node.tempo / 60` to allow beat sync.

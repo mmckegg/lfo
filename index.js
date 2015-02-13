@@ -32,6 +32,7 @@ function LFO(audioContext, opts){
   node.value = value.gain
   node.rate = rate.gain
   node.amp = amp.gain
+  node.phaseOffset = null
 
   Object.defineProperties(node, props)
 
@@ -101,7 +102,15 @@ var props = {
   start: {
     value: function(at){
       this._state.oscillator.start(at)
-      phaseOffset(this._state.oscillator, 0.5, Math.max(at, this._state.oscillator.context.currentTime))
+
+      var offset = this.phaseOffset != null ? 
+        this.phaseOffset : 
+        this.mode === 'multiply' ?
+          0.5 : 0
+
+      if (offset){
+        phaseOffset(this._state.oscillator, offset, Math.max(at, this._state.oscillator.context.currentTime))
+      }
     }
   },
 
